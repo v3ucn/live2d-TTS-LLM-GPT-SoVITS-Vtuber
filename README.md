@@ -14,3 +14,7 @@ npx live-server
 
 
 
+https://github.com/v3ucn/live2d-TTS-LLM-GPT-SoVITS-Vtuber/assets/1288038/c6ef2170-bdc2-4ed0-a11c-fdbe59da63a8
+
+
+
