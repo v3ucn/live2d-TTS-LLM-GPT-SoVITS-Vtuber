@@ -5,12 +5,12 @@
 # 运行命令
 
 ```
-npm install live-server
+npm install express ejs
 
-npx live-server
+node app.js
 ```
 
-# 访问 http://127.0.0.1:8080/live2d_test.html  TTS文字转语音页面
+# 访问 http://127.0.0.1:3000/tts  TTS文字转语音页面
 
 
 

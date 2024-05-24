@@ -19,14 +19,35 @@
 
 <div id="control">
 
-  <button id="play">测试音频</button>
+  <button id="play">测试音频</button> 
+  <br />
 
-  <br /><br />
+  <label>数字人模型</label>
+  <input type="search" id="model_url" style="width:300px;" value="<%=model_path%>" > <button id="update_model">更新模型</button>
+  <br />
+  <label>语音接口地址</label>
+  <input type="search" id="apiurl" style="width:200px;" value="http://127.0.0.1:9880" >
+  <br />
+  <label>推理文本语言种类</label>
+  <input type="search" id="text_lang" style="width:200px;" value="zh" >
+  <br />
+  <label>参考音频</label>
+  <input type="search" id="ref_audio_path" style="width:200px;" value="./Keira.wav" >
+  <br />
+  <label>参考音频文本</label>
+  <input type="search" id="prompt_text" style="width:300px;" value="光动嘴不如亲自做给你看,等我一下呀" >
+  <br />
+  <label>参考音频文本语种</label>
+  <input type="search" id="prompt_lang" style="width:200px;" value="zh" >
+  <br />
+  <label>切分方式</label>
+  <input type="search" id="text_split_method" style="width:200px;" value="cut5" >
+  <br />
+  <label>语速</label>
+  <input type="search" id="speed_factor" style="width:200px;" value="1.0" >
+  <br />
 
-  <label for="search">接口地址</label>
-  <input type="search" id="apiurl" style="width:400px;" value="http://127.0.0.1:9880/?text_lang=zh&ref_audio_path=./Keira.wav&prompt_lang=zh&prompt_text=光动嘴不如亲自做给你看,等我一下呀&text_split_method=cut5&batch_size=10&media_type=wav&speed_factor=1.0" >
-
-  <br /><br />
+  <br />
 
   <textarea id="text" style="width:400px;height:300px;">神经网络是通过假设的因素去“猜”稀疏矩阵的空缺数据，猜出来之后，再通过反向传播的逆运算来反推稀疏矩阵已存在的数据是否正确，从而判断“猜”出来的数据是否正确。这就是用来做数据预测的矩阵分解算法：通俗地讲，跟算命差不多，但是基于数学原理，如果通过反推证明针对一个人的算命策略都是对的，那么就把这套流程应用到其他人身上。</textarea>
 
@@ -40,9 +61,13 @@
 
 <script type="text/javascript">
 
+
+
+
 // 数字人模型
 
-const cubism4Model = "./kei_vowels_pro/kei_vowels_pro.model3.json";
+var cubism4Model = '<%=model_path%>';
+
 
 // const cubism4Model = "./Hiyori/Hiyori.model3.json";
 
@@ -53,6 +78,7 @@ const live2d = PIXI.live2d;
 
 (async function main() {
 
+
   const app = new PIXI.Application({
     view: document.getElementById("canvas"),
     autoStart: true,
@@ -60,7 +86,9 @@ const live2d = PIXI.live2d;
     backgroundColor: 0x333333
   });
 
-  const models = await Promise.all([
+
+
+  var models = await Promise.all([
     live2d.Live2DModel.from(cubism4Model)
   ]);
 
@@ -98,6 +126,26 @@ const live2d = PIXI.live2d;
   });
 
 
+  // 更新模型 
+
+  $("#update_model").click(function() {
+  
+    axios.get('/edit_config',{
+  params: {"model_path":$("#model_url").val()}
+})
+  .then(response => {
+    // 处理成功响应
+    console.log(response.data);
+   location.reload();
+  })
+  .catch(error => {
+    // 处理错误
+    console.error(error);
+    alert(error);
+  });
+
+});
+
 
   $("#play").click(function() {
   talk(model4,"./Keira.wav");
@@ -121,7 +169,19 @@ $("#start").click(function() {
 
   $("#start").prop("disabled", true);
 
-  axios.get($("#apiurl").val()+"&text="+text, { responseType: 'arraybuffer' })
+  axios.post($("#apiurl").val(), {
+    text_lang: $("#text_lang").val(),
+    ref_audio_path: $("#ref_audio_path").val(),
+    prompt_lang: $("#prompt_lang").val(),
+    prompt_text: $("#prompt_text").val(),
+    text_split_method: $("#text_split_method").val(),
+    batch_size: 10,
+    media_type: 'wav',
+    speed_factor: $("#speed_factor").val(),
+    text: $("#text").val()
+}, {
+    responseType: 'arraybuffer'
+})
   .then(response => {
     // 将返回的音频数据转换为Blob对象
     const audioBlob = new Blob([response.data], { type: 'audio/wav' });
@@ -149,8 +209,6 @@ $("#start").click(function() {
 
 
 })();
-
-
 
 
 function talk(model,audio){

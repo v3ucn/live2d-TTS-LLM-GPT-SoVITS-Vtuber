@@ -1,5 +1,5 @@
 pushd %~dp0
-call npm install live-server
-npx live-server %*
+call npm install express ejs
+node app.js %*
 pause
 popd
