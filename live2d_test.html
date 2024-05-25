@@ -23,7 +23,7 @@
   <br />
 
   <label>数字人模型</label>
-  <input type="search" id="model_url" style="width:300px;" value="<%=model_path%>" > <button id="update_model">更新模型</button>
+ <select id="model_list"></select> <button id="update_model">更新模型</button>
   <br />
   <label>语音接口地址</label>
   <input type="search" id="apiurl" style="width:200px;" value="http://127.0.0.1:9880" >
@@ -53,7 +53,7 @@
 
   <br /><br />
 
-  <button id="start">开始推理</button>
+  <button id="start">开始推理</button> <button id="stop">停止讲话</button> <button id="start_stream" style="display:none;">流式推理</button>
 
 
 
@@ -61,12 +61,35 @@
 
 <script type="text/javascript">
 
-
-
-
 // 数字人模型
+var cubism4Model = './models/<%=model_path%>/<%=model_path%>.model3.json';
 
-var cubism4Model = '<%=model_path%>';
+var selected_model = '<%-model_path%>';
+
+
+var model_list = '<%-model_list%>';
+model_list = JSON.parse(model_list);
+
+
+var $select = $("#model_list");
+$select.empty(); // 清空旧选项
+
+// 遍历新选项列表并添加到select元素中
+$.each(model_list, function(index, value) {
+
+  if (value==selected_model){
+
+    $select.append($("<option selected></option>").attr("value", value).text(value));
+
+  }else{
+
+    $select.append($("<option></option>").attr("value", value).text(value));
+
+  }
+
+});
+
+
 
 
 // const cubism4Model = "./Hiyori/Hiyori.model3.json";
@@ -131,7 +154,7 @@ const live2d = PIXI.live2d;
   $("#update_model").click(function() {
   
     axios.get('/edit_config',{
-  params: {"model_path":$("#model_url").val()}
+  params: {"model_path":$("#model_list").val()}
 })
   .then(response => {
     // 处理成功响应
@@ -152,6 +175,13 @@ const live2d = PIXI.live2d;
 });
 
 
+$("#stop").click(function() {
+
+  model4.stopSpeaking();
+
+});
+
+
 $("#start").click(function() {
 
   console.log($("#text").val());
@@ -169,6 +199,8 @@ $("#start").click(function() {
 
   $("#start").prop("disabled", true);
 
+  axios.defaults.timeout = 30000;
+
   axios.post($("#apiurl").val(), {
     text_lang: $("#text_lang").val(),
     ref_audio_path: $("#ref_audio_path").val(),
@@ -183,8 +215,12 @@ $("#start").click(function() {
     responseType: 'arraybuffer'
 })
   .then(response => {
+
+    console.log(response.data);
     // 将返回的音频数据转换为Blob对象
     const audioBlob = new Blob([response.data], { type: 'audio/wav' });
+
+    console.log(audioBlob);
 
     // 创建一个URL对象用于播放音频
     const audioUrl = URL.createObjectURL(audioBlob);
@@ -202,6 +238,77 @@ $("#start").click(function() {
     console.error('请求接口失败:', error);
     $("#start").prop("disabled",false);
   });
+
+
+});
+
+
+
+
+$("#start_stream").click(async function() {
+
+console.log($("#text").val());
+
+
+let text = $("#text").val().trim();
+
+
+if(text == ""){
+
+  alert("请输入推理内容");
+  return false;
+
+}
+
+$("#start_stream").prop("disabled", true);
+
+
+data = {text_lang: $("#text_lang").val(),
+  ref_audio_path: $("#ref_audio_path").val(),
+  prompt_lang: $("#prompt_lang").val(),
+  prompt_text: $("#prompt_text").val(),
+  text_split_method: $("#text_split_method").val(),
+  batch_size: 1,
+  media_type: 'wav',
+  speed_factor: $("#speed_factor").val(),
+  text: $("#text").val(),
+  streaming_mode:"true"}
+
+
+  const response = await fetch($("#apiurl").val(), {
+method: "POST",
+body: JSON.stringify(data),
+headers: {
+"Content-Type": "application/json"
+},
+});
+const reader = response.body.getReader();
+const context = new (window.AudioContext || window.webkitAudioContext)();
+const chunks = [];
+while (true) {
+const { done, value } = await reader.read();
+if (done) {
+console.log("***********************done");
+$("#start_stream").prop("disabled", false);
+break;
+}
+console.log("--------------------value");
+console.log(value);
+// 将读取到的值添加到数组中
+chunks.push(value);
+}
+// 合并所有读取到的二进制数据
+const audioBuffer = new Uint8Array(chunks.reduce((acc, val) => acc.concat(Array.from(val)), []));
+// 解码音频数据并播放
+context.decodeAudioData(audioBuffer.buffer).then(decodedData => {
+const source = context.createBufferSource();
+source.buffer = decodedData;
+source.connect(context.destination);
+source.start(0);
+}).catch(error => {
+console.error("Error decoding audio data:", error);
+});
+
 
 
 });

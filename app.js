@@ -1,6 +1,7 @@
 const express = require("express");
 const fs = require('fs');
 var ejs=require('ejs');
+const path = require('path');
 const app = express();
 
 app.listen(3000, () => {
@@ -55,10 +56,43 @@ app.get("/edit_config", (req, res) => {
 });
 
 
-// 文字转语音
+// 文字转语音 页面操作
 app.get("/tts", (req, res) => {
 
     var filePath = "./config.json"
+
+
+    // 同步地遍历目录并返回目录名
+    function getSubdirectories(dirPath) {
+        return new Promise((resolve, reject) => {
+          fs.readdir(dirPath, { withFileTypes: true }, (err, files) => {
+            if (err) {
+              return reject(err);
+            }
+      
+            // 过滤出目录项
+            const directories = files
+              .filter(file => file.isDirectory())
+              .map(file => file.name);
+      
+            resolve(directories);
+          });
+        });
+      }
+
+        // 指定目标目录路径
+        const targetDir = './models/';
+
+        var dis;
+
+        // 获取目标目录下的所有目录名
+        getSubdirectories(targetDir).then((directories) => {
+            
+            dis = directories;
+          })
+          .catch((err) => {
+            console.error(err);
+          });
 
     // 读取文件内容
     fs.readFile(filePath, 'utf8', (err, data) => {
@@ -70,8 +104,10 @@ app.get("/tts", (req, res) => {
 
             const jsonData = JSON.parse(data);
             const modelPath = jsonData.model_path;
+
+            dis = JSON.stringify(dis);
             
-            res.render(__dirname + "/live2d_test",{model_path: modelPath});
+            res.render(__dirname + "/live2d_test",{model_path: modelPath,model_list:dis});
         }
     });
 
