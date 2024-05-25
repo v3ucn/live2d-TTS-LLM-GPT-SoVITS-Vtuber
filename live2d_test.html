@@ -199,7 +199,7 @@ $("#start").click(function() {
 
   $("#start").prop("disabled", true);
 
-  axios.defaults.timeout = 30000;
+  axios.defaults.timeout = 300000;
 
   axios.post($("#apiurl").val(), {
     text_lang: $("#text_lang").val(),
