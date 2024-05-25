@@ -5,7 +5,7 @@
 # 运行命令
 
 ```
-npm install express ejs
+npm install
 
 node app.js
 ```
