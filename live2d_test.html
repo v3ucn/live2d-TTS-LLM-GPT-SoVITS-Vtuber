@@ -53,7 +53,7 @@
 
   <br /><br />
 
-  <button id="start">开始推理</button> <button id="stop">停止讲话</button> <button id="start_stream" style="display:none;">流式推理</button>
+  <button id="start">开始推理</button> <button id="start_stream">流式推理</button> <button id="stop">停止讲话</button> 
 
 
 
@@ -269,7 +269,7 @@ data = {text_lang: $("#text_lang").val(),
   prompt_text: $("#prompt_text").val(),
   text_split_method: $("#text_split_method").val(),
   batch_size: 1,
-  media_type: 'wav',
+  media_type: 'ogg',
   speed_factor: $("#speed_factor").val(),
   text: $("#text").val(),
   streaming_mode:"true"}
@@ -294,20 +294,32 @@ break;
 }
 console.log("--------------------value");
 console.log(value);
+
+// 将返回的音频数据转换为Blob对象
+const audioBlob = new Blob([value.buffer], { type: 'audio/ogg' });
+
+
+// 创建一个URL对象用于播放音频
+const audioUrl = URL.createObjectURL(audioBlob);
+
+talk(model4,audioUrl);
+
+
+
 // 将读取到的值添加到数组中
-chunks.push(value);
+//chunks.push(value);
 }
-// 合并所有读取到的二进制数据
-const audioBuffer = new Uint8Array(chunks.reduce((acc, val) => acc.concat(Array.from(val)), []));
-// 解码音频数据并播放
-context.decodeAudioData(audioBuffer.buffer).then(decodedData => {
-const source = context.createBufferSource();
-source.buffer = decodedData;
-source.connect(context.destination);
-source.start(0);
-}).catch(error => {
-console.error("Error decoding audio data:", error);
-});
+// // 合并所有读取到的二进制数据
+// const audioBuffer = new Uint8Array(chunks.reduce((acc, val) => acc.concat(Array.from(val)), []));
+// // 解码音频数据并播放
+// context.decodeAudioData(audioBuffer.buffer).then(decodedData => {
+// const source = context.createBufferSource();
+// source.buffer = decodedData;
+// source.connect(context.destination);
+// source.start(0);
+// }).catch(error => {
+// console.error("Error decoding audio data:", error);
+// });
 
 
 
