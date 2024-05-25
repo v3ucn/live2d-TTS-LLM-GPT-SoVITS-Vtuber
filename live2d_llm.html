@@ -21,7 +21,6 @@
 
   <button id="play">测试音频</button> 
   <br />
-
   <label>数字人模型</label>
  <select id="model_list"></select> <button id="update_model">更新模型</button>
   <br />
@@ -48,18 +47,33 @@
   <br />
 
   <br />
+  <label>ollama接口地址</label>
+  <input type="search" id="llmurl" style="width:300px;" value="http://localhost:11434/api/chat" >
 
-  <textarea id="text" style="width:400px;height:300px;">神经网络是通过假设的因素去“猜”稀疏矩阵的空缺数据，猜出来之后，再通过反向传播的逆运算来反推稀疏矩阵已存在的数据是否正确，从而判断“猜”出来的数据是否正确。这就是用来做数据预测的矩阵分解算法：通俗地讲，跟算命差不多，但是基于数学原理，如果通过反推证明针对一个人的算命策略都是对的，那么就把这套流程应用到其他人身上。</textarea>
+  <label>模型名称</label>
+  <input id="model_name"  value="nsfw"  >
+  <br />
+  <label>引导词(以AI的视角)</label>
+  <input id="role_card" style="width:300px;" value="亲爱的，我是你的性感女友，我会为了你做任何事情。"> 
+  <br />
+  <label>对话长度</label><input id="tokens" value="50"> <label>temperature温度</label><input id="temperature" value="0.5">
+  <br />
+  <label>聊天文本</label>
+  <input id="text" style="width:300px;" value="你好啊"> <button id="start_talk">发送消息</button> 
 
   <br /><br />
 
-  <button id="start">并行推理</button> <button id="start_stream">流式推理</button> <button id="stop">停止讲话</button> 
+  <textarea id="text_talk" style="width:400px;height:300px;font-size:17px;"></textarea>
+
+  <button id="start_stream" >流式合成语音</button>  <button id="start">并行合成语音</button>
 
 
 
 </div>
 
 <script type="text/javascript">
+
+  // $("#start_stream").hide()
 
 // 数字人模型
 var cubism4Model = './models/<%=model_path%>/<%=model_path%>.model3.json';
@@ -184,18 +198,13 @@ $("#stop").click(function() {
 
 $("#start").click(function() {
 
-  console.log($("#text").val());
+  console.log($("#text_talk").val());
 
 
-  let text = $("#text").val().trim();
+  let text = $("#text_talk").val().trim();
 
 
-  if(text == ""){
 
-    alert("请输入推理内容");
-    return false;
-
-  }
 
   $("#start").prop("disabled", true);
 
@@ -210,7 +219,7 @@ $("#start").click(function() {
     batch_size: 10,
     media_type: 'wav',
     speed_factor: $("#speed_factor").val(),
-    text: $("#text").val()
+    text: $("#text_talk").val()
 }, {
     responseType: 'arraybuffer'
 })
@@ -244,8 +253,7 @@ $("#start").click(function() {
 
 
 
-
-$("#start_stream").click(async function() {
+$("#start_talk").click(async function() {
 
 console.log($("#text").val());
 
@@ -255,10 +263,107 @@ let text = $("#text").val().trim();
 
 if(text == ""){
 
-  alert("请输入推理内容");
+  alert("请输入聊天内容");
   return false;
 
 }
+
+$("#start_talk").prop("disabled", true);
+
+
+const data = {
+
+  "model":$("#model_name").val(),"stream":true,
+  "messages": [
+  {
+      "role": "assistant",
+      "content": $("#role_card").val()
+    },
+    {
+      "role": "user",
+      "content": $("#text").val()
+    }
+  ],
+  "options": {
+    "num_keep": 5,
+    "num_predict": 100,
+    "top_k": 20,
+    "top_p": 0.9,
+    "tfs_z": 0.5,
+    "typical_p": 0.7,
+    "repeat_last_n": 33,
+    "temperature": parseFloat($("#temperature").val()),
+    "repeat_penalty": 1.2,
+    "presence_penalty": 1.5,
+    "frequency_penalty": 1.0,
+    "mirostat": 1,
+    "mirostat_tau": 0.7,
+    "mirostat_eta": 0.6,
+    "penalize_newline": true,
+    "numa": false,
+    "num_predict": parseInt($("#tokens").val()),
+    "num_thread": 8
+  }
+
+}
+
+$("#text_talk").val(""); // 清空旧选项
+
+  const response = await fetch($("#llmurl").val(), {
+method: "POST",
+body: JSON.stringify(data),
+headers: {
+"Content-Type": "application/json"
+},
+});
+const reader = response.body?.pipeThrough(new TextDecoderStream()).getReader();
+
+while (true) {
+let { done, value } = await reader.read();
+if (done) {
+console.log("***********************done");
+$("#start_talk").prop("disabled",false);
+
+$("#start_stream").click();
+
+
+
+break;
+}
+console.log("--------------------value");
+try {
+  value = JSON.parse(value);
+  //console.log(value);
+    // 在这里可以使用parsedValue变量
+    const text = value.message.content;
+$('#text_talk').val($('#text_talk').val() + text);
+
+} catch (error) {
+    console.error("JSON 解析出错: " + error);
+}
+
+
+
+
+}
+
+
+
+
+});
+
+
+
+
+
+$("#start_stream").click(async function() {
+
+console.log($("#text_talk").val());
+
+
+let text = $("#text").val().trim();
+
+
 
 $("#start_stream").prop("disabled", true);
 
@@ -271,7 +376,7 @@ data = {text_lang: $("#text_lang").val(),
   batch_size: 1,
   media_type: 'ogg',
   speed_factor: $("#speed_factor").val(),
-  text: $("#text").val(),
+  text: $("#text_talk").val(),
   streaming_mode:"true"}
 
 
