@@ -15,7 +15,7 @@
 </head>
 
 <body>
-<canvas id=canvas></canvas>
+<canvas id="canvas" ></canvas>
 
 <div id="control">
 
@@ -24,6 +24,15 @@
 
   <label>数字人模型</label>
  <select id="model_list"></select> <button id="update_model">更新模型</button>
+  <br />
+  <label>眼神跟随鼠标</label>
+  <input type="radio"  name="eyes" value="true" checked >
+  <label>跟随鼠标</label><input type="radio" id="option2" name="eyes" value="false" ><label >前方直视</label>
+  <br />
+  <label>背景控制</label>
+  <input type="radio" id="option1" name="options" value="bg_color" checked >
+  <label for="option1">背景颜色</label><input id="bg_color" type="text" style="width:100px;"  ><br /><input type="radio" id="option2" name="options" value="bg_img" ><label for="option2">背景图片</label> <input type="file" id="imgupload" style="display:none"/>
+  <button id="openImgUpload">上传图片</button> <button id="update_bg">更新背景</button>
   <br />
   <label>语音接口地址</label>
   <input type="search" id="apiurl" style="width:200px;" value="http://127.0.0.1:9880" >
@@ -61,6 +70,133 @@
 
 <script type="text/javascript">
 
+
+$('input[name="eyes"]').click(function(){
+  
+  var radioValue = $("input[name='eyes']:checked").val();
+
+  setCookie("eyes", radioValue, 1024);
+
+  location.reload();
+
+            });
+
+$('#openImgUpload').click(function(){
+    $('#imgupload').trigger('click');
+});
+
+$('#imgupload').on('change', function(){
+    var formData = new FormData();
+    formData.append('image', $(this)[0].files[0]);
+
+    $.ajax({
+        url: '/upload',
+        type: 'POST',
+        data: formData,
+        processData: false,
+        contentType: false,
+        success: function(data){
+            console.log('上传成功: ');
+            console.log(data.filename);
+
+            setCookie("bg_img", data.filename, 1024);
+
+            var radioValue = $("input[name='options']:checked").val();
+
+            setCookie("bg_con", radioValue, 1024);
+
+            location.reload();
+
+
+        }
+    });
+});
+
+// 从 cookie 中获取保存的值
+function getCookie(name) {
+            const value = "; " + document.cookie;
+            const parts = value.split("; " + name + "=");
+            if (parts.length === 2) return parts.pop().split(";").shift();
+        }
+// 将选中的值写入 cookie
+function setCookie(name, value, days) {
+            const date = new Date();
+            date.setTime(date.getTime() + (days * 24 * 60 * 60 * 1000));
+            const expires = "expires=" + date.toUTCString();
+            document.cookie = name + "=" + value + ";" + expires + ";path=/";
+        }
+
+// 控制背景色
+
+// 读取 cookie 中的值并设置单选按钮的选中状态
+const selectedValue = getCookie("bg_con");
+if (selectedValue) {
+    const radioButtons = document.getElementsByName("options");
+    radioButtons.forEach(radio => {
+      radio.checked = false;
+        if (radio.value === selectedValue) {
+            radio.checked = true;
+        }
+    });
+}
+
+
+// 读取 cookie 中的值并设置单选按钮的选中状态
+const eyesValue = getCookie("eyes");
+if (eyesValue) {
+    const radioButtons = document.getElementsByName("eyes");
+    radioButtons.forEach(radio => {
+
+      radio.checked = false;
+        if (radio.value == eyesValue) {
+            radio.checked = true;
+        }
+    });
+}
+
+// 设置背景色
+
+let radioValue = $("input[name='options']:checked").val();
+
+if (getCookie("bg_color") === undefined) {$("#bg_color").val("gray");}else{$("#bg_color").val(getCookie("bg_color"));}
+
+if(radioValue == "bg_color"){
+
+
+
+$("#canvas").css("background-color",$("#bg_color").val());
+
+}else{
+
+    if (getCookie("bg_img") === undefined) {  
+
+
+
+    }else{
+      
+      let imageUrl = "./uploads/"+getCookie("bg_img");
+      $("#canvas").css("background-image", "url(" + imageUrl + ")");
+      // $("#canvas").css("background-repeat","space");
+    
+    
+    }
+
+}
+
+let eye_bool = true;
+
+if (getCookie("eyes") === undefined) {}else{
+  
+  if (getCookie("eyes")=="false"){
+
+    eye_bool = false;
+
+
+  } 
+
+}
+
+
 // 数字人模型
 var cubism4Model = './models/<%=model_path%>/<%=model_path%>.model3.json';
 
@@ -73,6 +209,8 @@ model_list = JSON.parse(model_list);
 
 var $select = $("#model_list");
 $select.empty(); // 清空旧选项
+
+
 
 // 遍历新选项列表并添加到select元素中
 $.each(model_list, function(index, value) {
@@ -106,13 +244,18 @@ const live2d = PIXI.live2d;
     view: document.getElementById("canvas"),
     autoStart: true,
     resizeTo: window,
-    backgroundColor: 0x333333
+    // 背景是否透明
+    transparent: true,
+    backgroundAlpha: 0,
+    // autoDensity:true,
+    // autoResize: true,
+    antialias: true,
   });
 
 
 
   var models = await Promise.all([
-    live2d.Live2DModel.from(cubism4Model)
+    live2d.Live2DModel.from(cubism4Model,{ autoInteract: eye_bool })
   ]);
 
   models.forEach((model) => {
@@ -147,6 +290,25 @@ const live2d = PIXI.live2d;
       model4.expression();
     }
   });
+
+
+    // 更新背景
+
+    $("#update_bg").click(function() {
+  
+      var radioValue = $("input[name='options']:checked").val();
+
+      setCookie("bg_con", radioValue, 1024);
+
+      setCookie("bg_color", $("#bg_color").val(), 1024);
+
+
+
+      location.reload();
+
+
+
+});
 
 
   // 更新模型 

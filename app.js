@@ -3,10 +3,23 @@ const fs = require('fs');
 var ejs=require('ejs');
 const path = require('path');
 const app = express();
+const multer  = require('multer');
 
 app.listen(3000, () => {
   console.log("Application started and Listening on port 3000");
   console.log("请打开浏览器，访问 http://localhost:3000 ");
+});
+
+
+// 设置存储引擎和文件上传路径
+const storage = multer.diskStorage({
+  destination: function (req, file, cb) {
+    cb(null, './uploads/') // 将上传的文件存储在 uploads 文件夹中
+  },
+  filename: function (req, file, cb) {
+    const ext = path.extname(file.originalname); // 获取文件原始扩展名
+    cb(null, file.fieldname + ext) // 使用原始扩展名生成文件名
+  }
 });
 
 
@@ -17,6 +30,20 @@ app.use(express.static(__dirname));
 app.engine('html',ejs.__express);
 //设置渲染引擎为html
 app.set('view engine','html');
+
+
+// 创建 multer 实例
+const upload = multer({ storage: storage });
+
+
+// 上传文件
+
+app.post('/upload', upload.single('image'), (req, res) => {
+  if (!req.file) {
+    return res.status(400).json({ error: '未上传文件' });
+  }
+  res.json({ message: '文件上传成功', filename: req.file.filename });
+});
 
 
 // 修改json接口
