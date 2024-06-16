@@ -1,0 +1,24 @@
+{
+	"Version": 3,
+	"FileReferences": {
+		"Moc": "EVA RIN normal.moc3",
+		"Textures": [
+			"EVA RIN normal.16384/texture_00.png",
+			"EVA RIN normal.16384/texture_01.png"
+		],
+		"Physics": "EVA RIN normal.physics3.json",
+		"DisplayInfo": "EVA RIN normal.cdi3.json"
+	},
+	"Groups": [
+		{
+			"Target": "Parameter",
+			"Name": "LipSync",
+			"Ids": []
+		},
+		{
+			"Target": "Parameter",
+			"Name": "EyeBlink",
+			"Ids": []
+		}
+	]
+}

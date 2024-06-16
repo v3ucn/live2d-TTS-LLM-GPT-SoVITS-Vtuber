@@ -19,7 +19,7 @@
 
 <div id="control">
 
-  <button id="play">测试音频</button> 
+  <button id="play">测试音频</button> <button onclick="JavaScript:window.location.href='/'">返回菜单</button>
   <br />
   <label>数字人模型</label>
  <select id="model_list"></select> <button id="update_model">更新模型</button>
@@ -65,7 +65,7 @@
   <label>引导词(以AI的视角)</label>
   <input id="role_card" style="width:300px;" value="亲爱的，我是你的性感女友，我会为了你做任何事情。"> 
   <br />
-  <label>对话长度</label><input id="tokens" value="50"> <label>temperature温度</label><input id="temperature" value="0.5">
+  <label>对话长度</label><input id="tokens" value="50"> <label>temperature温度</label><input id="temperature" value="0.7">
   <br />
   <label>聊天文本</label>
   <input id="text" style="width:300px;" value=""> <button id="start_talk">发送消息</button> 
@@ -83,6 +83,14 @@
 <script type="text/javascript">
 
   // $("#start_stream").hide()
+
+
+  $('#text').keypress(function(e) {
+        if (e.which == 13) { // 检查是否按下了回车键
+          $('#start_talk').click(); // 触发按钮点击事件
+          return false; // 阻止默认行为
+        }
+      });
 
   $('input[name="eyes"]').click(function(){
   
@@ -441,18 +449,18 @@ const data = {
   "options": {
     "num_keep": 5,
     "num_predict": 100,
-    "top_k": 20,
-    "top_p": 0.9,
-    "tfs_z": 0.5,
-    "typical_p": 0.7,
-    "repeat_last_n": 33,
+    "top_k": 40,
+    "top_p": 0.95,
+    //"tfs_z": 0.5,
+    //"typical_p": 0.7,
+    //"repeat_last_n": 33,
     "temperature": parseFloat($("#temperature").val()),
-    "repeat_penalty": 1.2,
-    "presence_penalty": 1.5,
-    "frequency_penalty": 1.0,
-    "mirostat": 1,
-    "mirostat_tau": 0.7,
-    "mirostat_eta": 0.6,
+    "repeat_penalty": 1,
+    // "presence_penalty": 1.5,
+    // "frequency_penalty": 1.0,
+    // "mirostat": 1,
+    // "mirostat_tau": 0.7,
+    // "mirostat_eta": 0.6,
     "penalize_newline": true,
     "numa": false,
     "num_predict": parseInt($("#tokens").val()),
