@@ -1,0 +1,29 @@
+{
+	"Version": 3,
+	"FileReferences": {
+		"Moc": "Nova - F.moc3",
+		"Textures": [
+			"Nova - F.2048/texture_00.png",
+			"Nova - F.2048/texture_01.png",
+			"Nova - F.2048/texture_02.png",
+			"Nova - F.2048/texture_03.png"
+		],
+		"Physics": "Nova - F.physics3.json",
+		"DisplayInfo": "Nova - F.cdi3.json"
+	},
+	"Groups": [
+		{
+			"Target": "Parameter",
+			"Name": "EyeBlink",
+			"Ids": [
+				"ParamEyeLOpen",
+				"ParamEyeROpen"
+			]
+		},
+		{
+			"Target": "Parameter",
+			"Name": "LipSync",
+			"Ids": []
+		}
+	]
+}

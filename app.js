@@ -4,6 +4,8 @@ var ejs=require('ejs');
 const path = require('path');
 const app = express();
 const multer  = require('multer');
+const { EdgeTTS } = require('node-edge-tts')
+
 
 app.listen(3000, () => {
   console.log("Application started and Listening on port 3000");
@@ -43,6 +45,42 @@ app.post('/upload', upload.single('image'), (req, res) => {
     return res.status(400).json({ error: '未上传文件' });
   }
   res.json({ message: '文件上传成功', filename: req.file.filename });
+});
+
+
+
+// edge_tts接口
+
+app.get("/edge_tts", async (req, res) => {
+
+  var speaker = req.query.speaker || 'zh-CN-XiaoxiaoNeural'; 
+
+  var text = req.query.text || '你好哟,这里是测试';
+    
+
+  const tts = new EdgeTTS({
+    voice: speaker
+  })
+
+  await tts.ttsPromise(text,"output.wav")
+
+
+  fs.readFile("output.wav", (err, data) => {
+    if (err) {
+      console.error("读取文件错误:", err);
+      res.status(500).send("服务器内部错误");
+      return;
+    }
+
+    // 将音频数据编码为 Base64
+    const base64Audio = Buffer.from(data).toString("base64");
+
+    // 将 Base64 编码的音频数据发送到前端
+    res.send({ audio: base64Audio });
+  });
+
+
+
 });
 
 
@@ -208,4 +246,127 @@ app.get("/llm", (req, res) => {
 
 app.get("/", (req, res) => {
     res.render(__dirname + "/index");
+});
+
+
+
+// 文字转语音 edge页面操作
+app.get("/tts_edge", (req, res) => {
+
+  var filePath = "./config.json"
+
+
+  // 同步地遍历目录并返回目录名
+  function getSubdirectories(dirPath) {
+      return new Promise((resolve, reject) => {
+        fs.readdir(dirPath, { withFileTypes: true }, (err, files) => {
+          if (err) {
+            return reject(err);
+          }
+    
+          // 过滤出目录项
+          const directories = files
+            .filter(file => file.isDirectory())
+            .map(file => file.name);
+    
+          resolve(directories);
+        });
+      });
+    }
+
+      // 指定目标目录路径
+      const targetDir = './models/';
+
+      var dis;
+
+      // 获取目标目录下的所有目录名
+      getSubdirectories(targetDir).then((directories) => {
+          
+          dis = directories;
+        })
+        .catch((err) => {
+          console.error(err);
+        });
+
+  // 读取文件内容
+  fs.readFile(filePath, 'utf8', (err, data) => {
+      if (err) {
+          res.status(500).send('Error reading file,配置文件不存在');
+      } else {
+
+          console.log(data);
+
+          const jsonData = JSON.parse(data);
+          const modelPath = jsonData.model_path;
+
+          dis = JSON.stringify(dis);
+          
+          res.render(__dirname + "/live2d_edge_tts",{model_path: modelPath,model_list:dis});
+      }
+  });
+
+  
+
+
+});
+
+
+// 大模型 edge_tts
+app.get("/llm_edge_tts", (req, res) => {
+
+  var filePath = "./config.json"
+
+
+  // 同步地遍历目录并返回目录名
+  function getSubdirectories(dirPath) {
+      return new Promise((resolve, reject) => {
+        fs.readdir(dirPath, { withFileTypes: true }, (err, files) => {
+          if (err) {
+            return reject(err);
+          }
+    
+          // 过滤出目录项
+          const directories = files
+            .filter(file => file.isDirectory())
+            .map(file => file.name);
+    
+          resolve(directories);
+        });
+      });
+    }
+
+      // 指定目标目录路径
+      const targetDir = './models/';
+
+      var dis;
+
+      // 获取目标目录下的所有目录名
+      getSubdirectories(targetDir).then((directories) => {
+          
+          dis = directories;
+        })
+        .catch((err) => {
+          console.error(err);
+        });
+
+  // 读取文件内容
+  fs.readFile(filePath, 'utf8', (err, data) => {
+      if (err) {
+          res.status(500).send('Error reading file,配置文件不存在');
+      } else {
+
+          console.log(data);
+
+          const jsonData = JSON.parse(data);
+          const modelPath = jsonData.model_path;
+
+          dis = JSON.stringify(dis);
+          
+          res.render(__dirname + "/live2d_llm_edge_tts",{model_path: modelPath,model_list:dis});
+      }
+  });
+
+  
+
+
 });
