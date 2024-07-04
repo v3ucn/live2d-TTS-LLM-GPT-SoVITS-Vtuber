@@ -18,6 +18,9 @@ https://github.com/v3ucn/live2d-TTS-LLM-GPT-SoVITS-Vtuber/assets/1288038/c6ef217
 
 ## 大模型语音聊天页面
 
+https://github.com/v3ucn/live2d-TTS-LLM-GPT-SoVITS-Vtuber/assets/1288038/91b31e27-1d73-420f-bae7-fd392a18aaee
+
+
 
 
 
